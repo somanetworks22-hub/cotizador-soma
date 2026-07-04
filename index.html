@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Cotizaciones - SOMA</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* LAYOUT PRINCIPAL */
+        body { font-family: 'Montserrat', sans-serif; background: #e0e4e8; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* PANEL IZQUIERDO */
+        .panel-macro { width: 400px; background: white; padding: 25px; overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.1); z-index: 10; display: flex; flex-direction: column; gap: 20px; }
+        .panel-macro h3 { color: #1a2b4c; border-bottom: 2px solid #f26822; padding-bottom: 5px; margin: 0 0 10px 0; font-size: 14px; }
+        .input-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+        .input-group label { font-size: 11px; font-weight: 600; color: #555; }
+        .panel-macro input, .panel-macro select { padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; font-family: 'Montserrat', sans-serif; font-size: 12px; }
+        .fila-doble { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        
+        .btn-accion { background: #1a2b4c; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: 600; font-family: 'Montserrat'; transition: 0.2s; }
+        .btn-accion:hover { background: #0f1a2e; }
+        .btn-naranja { background: #f26822; }
+        .btn-naranja:hover { background: #d95a1c; }
+        .btn-rojo { background: #dc3545; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; }
+
+        /* ÁREA DEL DOCUMENTO DERECHA */
+        .area-preview { flex: 1; overflow-y: auto; padding: 40px; display: flex; justify-content: center; align-items: flex-start; background: #6b7280; }
+
+        /* CONTENEDOR A4 */
+        .a4-container { width: 210mm; min-height: 297mm; background: white; padding: 12mm 15mm; box-sizing: border-box; position: relative; font-size: 10px; color: #333; box-shadow: 0 5px 15px rgba(0,0,0,0.3); display: flex; flex-direction: column; }
+        
+        /* UTILIDADES */
+        .text-azul { color: #1a2b4c; }
+        .text-naranja { color: #f26822; }
+        .bold { font-weight: 700; }
+        .icon-small { width: 15px; text-align: center; margin-right: 5px; color: #1a2b4c; }
+        
+        /* CABECERA */
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #e0e0e0; padding-bottom: 20px; margin-bottom: 25px; }
+        .logo-box { width: 200px; display: flex; align-items: flex-start; margin-top: -10px; }
+        .logo-box img { max-width: 100%; max-height: 80px; object-fit: contain; }
+        
+        .company-info { flex: 1; margin-left: 10px; }
+        .company-info h2 { margin: 0 0 5px 0; font-size: 12px; color: #1a2b4c; font-weight: 700; }
+        .company-info p { margin: 3px 0; display: flex; align-items: center; }
+        .quote-info { text-align: right; width: 220px; }
+        .quote-info h1 { margin: 0; font-size: 26px; color: #f26822; font-weight: 700; }
+        .quote-badge { background: #1a2b4c; color: white; padding: 6px 15px; border-radius: 20px; display: inline-block; margin: 8px 0; font-weight: 600; font-size: 12px; }
+        .quote-details p { margin: 4px 0; display: flex; align-items: center; justify-content: flex-end; }
+
+        /* SECCIONES: CLIENTE E INSTALACIÓN */
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 25px; }
+        .section-header { display: flex; align-items: center; border-bottom: 1.5px solid #f26822; padding-bottom: 5px; margin-bottom: 12px; }
+        .section-header i { font-size: 14px; margin-right: 8px; }
+        .section-title { font-weight: 700; color: #1a2b4c; font-size: 11px; }
+        .info-row { display: flex; margin-bottom: 8px; }
+        .info-row strong { width: 90px; color: #1a2b4c; font-weight: 600; }
+        .info-row span { flex: 1; }
+
+        /* TABLA DE EQUIPOS */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1px solid #e0e0e0; }
+        th { background: #1a2b4c; color: white; padding: 10px; text-align: center; font-size: 9px; font-weight: 600; }
+        td { border-bottom: 1px solid #e0e0e0; border-right: 1px solid #e0e0e0; padding: 15px 10px; text-align: center; vertical-align: middle; }
+        td:last-child { border-right: none; }
+        td.desc { text-align: left; }
+        .desc-title { font-weight: 700; color: #1a2b4c; font-size: 10px; display: block; margin-bottom: 4px; }
+        .desc-sub { color: #666; font-size: 9px; }
+
+        /* TOTALES Y TÉRMINOS ALINEADOS */
+        .bottom-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px; flex-grow: 1; }
+        
+        .terminos-box { border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; background: #fafafa; }
+        .terminos-list { padding-left: 0; margin: 15px 0 0 0; list-style: none; }
+        .terminos-list li { margin-bottom: 12px; position: relative; padding-left: 20px; color: #444; line-height: 1.4; text-align: justify; }
+        .terminos-list li i { position: absolute; left: 0; top: 2px; color: #1a2b4c; font-size: 10px; }
+
+        .right-column { display: flex; flex-direction: column; gap: 20px; }
+
+        .totales-box { border: 1px solid #e0e0e0; border-radius: 6px; overflow: hidden; }
+        .total-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #e0e0e0; }
+        .total-icon { border: 1px solid #1a2b4c; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; margin-right: 10px; }
+        .total-final { background: #f26822; color: white; font-weight: 700; font-size: 14px; border-bottom: none; padding: 15px; }
+
+        .bancos-box { border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; background: #fafafa; }
+        .banco-item { display: flex; align-items: center; margin-bottom: 12px; font-size: 9px; line-height: 1.5; }
+
+        /* FOOTER ABSOLUTO */
+        .footer { margin-top: auto; padding-top: 15px; border-top: 1.5px solid #e0e0e0; display: flex; justify-content: space-between; color: #666; font-size: 9px; }
+        .footer-item { display: flex; align-items: center; }
+        .footer-item i { margin-right: 5px; color: #1a2b4c; }
+        .separator { color: #ccc; margin: 0 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="panel-macro">
+        
+        <div>
+            <h3><i class="fa-solid fa-gear"></i> 1. Configuración Inicial</h3>
+            <div class="fila-doble">
+                <div class="input-group">
+                    <label>Asesor Comercial</label>
+                    <input type="text" id="inpAsesor" value="Marlon Riojas" oninput="actualizarDoc()">
+                </div>
+                <div class="input-group">
+                    <label>Moneda</label>
+                    <select id="inpMoneda" onchange="cambiarMoneda()">
+                        <option value="USD">Dólares ($)</option>
+                        <option value="PEN">Soles (S/)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <h3><i class="fa-solid fa-user"></i> 2. Datos del Cliente</h3>
+            <div class="input-group">
+                <label>Consultar SUNAT</label>
+                <div style="display:flex; gap:5px;">
+                    <input type="text" id="inpBuscarRuc" placeholder="N° de RUC (11 dígitos)" maxlength="11" style="flex:1;">
+                    <button class="btn-accion" id="btnBusqueda" onclick="buscarRuc()"><i class="fa-solid fa-search"></i> Buscar</button>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Razón Social (Editable)</label>
+                <input type="text" id="inpRazon" oninput="actualizarDoc()" placeholder="Nombre de la empresa">
+            </div>
+            <div class="input-group">
+                <label>RUC</label>
+                <input type="text" id="inpRuc" oninput="actualizarDoc()" placeholder="20...">
+            </div>
+            <div class="input-group">
+                <label>Dirección</label>
+                <input type="text" id="inpDireccion" oninput="actualizarDoc()" placeholder="Av. Ejemplo 123">
+            </div>
+            <div class="fila-doble">
+                <div class="input-group">
+                    <label>Contacto</label>
+                    <input type="text" id="inpContacto" oninput="actualizarDoc()">
+                </div>
+                <div class="input-group">
+                    <label>Teléfono</label>
+                    <input type="text" id="inpTelefono" oninput="actualizarDoc()">
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <h3><i class="fa-solid fa-box"></i> 3. Agregar Equipos</h3>
+            <div class="input-group">
+                <label>Nombre del Equipo / Servicio</label>
+                <input type="text" id="inpTituloEq" placeholder="Ej: CCR2116">
+            </div>
+            <div class="input-group">
+                <label>Descripción detallada (Opcional)</label>
+                <input type="text" id="inpSubEq" placeholder="Ej: Router empresarial">
+            </div>
+            <div class="fila-doble">
+                <div class="input-group">
+                    <label>Cantidad</label>
+                    <input type="number" id="inpCantEq" value="1" step="1">
+                </div>
+                <div class="input-group">
+                    <label id="lblPrecioInput">Precio Final Inc. IGV ($)</label>
+                    <input type="number" id="inpPrecioEq" value="100.00" step="0.01">
+                </div>
+            </div>
+            <button class="btn-accion" style="width:100%; margin-top:5px;" onclick="agregarEquipo()"><i class="fa-solid fa-plus"></i> Añadir a la Cotización</button>
+        </div>
+
+        <div style="margin-top: auto;">
+            <button class="btn-accion btn-naranja" style="width: 100%; font-size: 14px;" onclick="exportarPDF()"><i class="fa-solid fa-file-pdf"></i> Guardar Cotización PDF</button>
+        </div>
+    </div>
+
+    <div class="area-preview">
+        <div class="a4-container" id="documentoCotizacion">
+            
+            <div class="header">
+                <div class="logo-box">
+                    <img src="logo.png" alt="SOMA NETWORKS">
+                </div>
+                <div class="company-info">
+                    <h2>SOMA NETWORKS E.I.R.L.</h2>
+                    <p><i class="fa-solid fa-id-card icon-small"></i> RUC: 20615797341</p>
+                    <p><i class="fa-solid fa-location-dot icon-small"></i> Jr. Saenz Peña 938, Lima, Perú</p>
+                    <p><i class="fa-solid fa-phone icon-small"></i> +51 960 278 584</p>
+                    <p><i class="fa-solid fa-envelope icon-small"></i> ventas@somanetworks.pe</p>
+                </div>
+                <div class="quote-info">
+                    <h1>COTIZACIÓN</h1>
+                    <div class="quote-badge" id="numCotizacion">N° SOMA-2026-0002</div>
+                    <div class="quote-details">
+                        <p><i class="fa-regular fa-calendar icon-small"></i> <span class="bold text-azul">Fecha de emisión:</span>&nbsp;<span id="txtFechaEmi"></span></p>
+                        <p><i class="fa-regular fa-clock icon-small"></i> <span class="bold text-azul">Vigencia:</span>&nbsp;7 días calendario</p>
+                        <p><i class="fa-solid fa-user icon-small"></i> <span class="bold text-azul">Asesor Comercial:</span>&nbsp;<span id="txtAsesor">Marlon Riojas</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div>
+                    <div class="section-header">
+                        <i class="fa-solid fa-circle-user text-azul"></i>
+                        <span class="section-title">DATOS DEL CLIENTE</span>
+                    </div>
+                    <div class="info-row"><strong>Razón Social:</strong> <span id="txtRazonSocial">-</span></div>
+                    <div class="info-row"><strong>RUC:</strong> <span id="txtRuc">-</span></div>
+                    <div class="info-row"><strong>Contacto:</strong> <span id="txtContacto">-</span></div>
+                    <div class="info-row"><strong>Teléfono:</strong> <span id="txtTelefono">-</span></div>
+                </div>
+                <div style="padding-top: 29px;">
+                    <div class="info-row"><strong>Dirección:</strong> <span id="txtDireccion">-</span></div>
+                    <div class="info-row"><strong>Distrito:</strong> <span>-</span></div>
+                    <div class="info-row"><strong>Ciudad:</strong> <span>Lima, Perú</span></div>
+                    <div class="info-row"><strong>Referencia:</strong> <span>-</span></div>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th width="12%">CÓDIGO</th>
+                        <th width="46%">DESCRIPCIÓN</th>
+                        <th width="14%">CANTIDAD</th>
+                        <th width="14%">PRECIO UNITARIO</th>
+                        <th width="14%">TOTAL</th>
+                        <th width="0%" class="ocultar-pdf" style="background:transparent; padding:0;"></th>
+                    </tr>
+                </thead>
+                <tbody id="tablaCuerpo">
+                </tbody>
+            </table>
+
+            <div class="bottom-grid">
+                
+                <div class="terminos-box">
+                    <div class="section-header" style="border-bottom: none; margin-bottom: 0;">
+                        <i class="fa-solid fa-shield-halved text-azul"></i>
+                        <span class="section-title">TÉRMINOS Y CONDICIONES</span>
+                    </div>
+                    <ul class="terminos-list">
+                        <li><i class="fa-regular fa-circle-check"></i> Cotización válida por 7 días calendarios, consultar disponibilidad de stock antes de realizar el pago.</li>
+                        <li id="termMoneda"><i class="fa-regular fa-circle-check"></i> Precios en dólares americanos incluido IGV, está sujeto al tipo de cambio del día.</li>
+                        <li><i class="fa-regular fa-circle-check"></i> Todo cambio o devolución de producto se dará dentro de los 10 días calendarios, presentando su comprobante y empaque original, con un plazo de respuesta de 2 días. No está sujeto a devolución de dinero.</li>
+                        <li><i class="fa-regular fa-circle-check"></i> El comprador debe tener conocimiento de los equipos adquiridos para su buen uso y así evitar fallas por malas prácticas.</li>
+                        <li><i class="fa-regular fa-circle-check"></i> Los equipos cuentan con garantía por defecto de fábrica, según el plazo asignado por el fabricante; la cual será evaluada por el área técnica emitiendo un informe para considerar la cobertura, conforme al certificado de garantía, en un plazo de respuesta de 7 días calendarios.</li>
+                        <li><i class="fa-regular fa-circle-check"></i> Toda empresa que cuente con la calidad de Agente de retención deberá comunicarlo antes de la emisión del comprobante.</li>
+                    </ul>
+                </div>
+
+                <div class="right-column">
+                    <div class="totales-box">
+                        <div class="total-row">
+                            <div style="display:flex; align-items:center;">
+                                <span class="total-icon text-azul" id="iconSubtotal">$</span>
+                                <span class="bold text-azul">Subtotal</span>
+                            </div>
+                            <span id="txtSubtotal">$ 0.00</span>
+                        </div>
+                        <div class="total-row">
+                            <div style="display:flex; align-items:center;">
+                                <span class="total-icon text-azul">%</span>
+                                <span class="bold text-azul">IGV (18%)</span>
+                            </div>
+                            <span id="txtIgv">$ 0.00</span>
+                        </div>
+                        <div class="total-row total-final">
+                            <span>TOTAL A PAGAR</span>
+                            <span id="txtTotal">$ 0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="bancos-box">
+                        <div class="section-header" style="border-bottom: none; margin-bottom: 10px;">
+                            <i class="fa-regular fa-credit-card text-naranja"></i>
+                            <span class="section-title" style="color: #f26822;">INFORMACIÓN DE PAGO</span>
+                        </div>
+                        
+                        <div class="banco-item">
+                            <img src="bcp.png" alt="BCP" style="height: 25px; margin-right: 15px; object-fit: contain;">
+                            <div class="banco-info">
+                                <strong>Titular: SOMA NETWORKS E.I.R.L.</strong><br>
+                                <span style="color:#002A8D; font-weight:bold;" id="lblBancoMoneda">BCP (Dólares):</span> <span id="txtCuenta">191-7405057164</span><br>
+                                <span style="color:#002A8D; font-weight:bold;">CCI:</span> <span id="txtCCI">00219100740505716450</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="footer">
+                <div class="footer-item"><i class="fa-solid fa-globe"></i> www.somanetworks.pe</div>
+                <span class="separator">|</span>
+                <div class="footer-item"><i class="fa-regular fa-envelope"></i> ventas@somanetworks.pe</div>
+                <span class="separator">|</span>
+                <div class="footer-item"><i class="fa-solid fa-phone"></i> +51 960 278 584</div>
+                <span class="separator" style="visibility: hidden;">|</span>
+                <div class="footer-item" style="color: #1a2b4c; font-weight: 600;">Página 1 de 1</div>
+            </div>
+            
+        </div>
+    </div>
+
+    <script>
+        let listaEquipos = [];
+        let monedaSimbolo = '$'; // Por defecto
+
+        window.onload = () => {
+            let seq = localStorage.getItem('soma_seq_v2') || 2; 
+            document.getElementById('numCotizacion').innerText = `N° SOMA-2026-${String(seq).padStart(4, '0')}`;
+
+            const hoy = new Date();
+            document.getElementById('txtFechaEmi').innerText = hoy.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            
+            actualizarTabla();
+        };
+
+        // Función para cambiar de moneda dinámicamente
+        function cambiarMoneda() {
+            const moneda = document.getElementById('inpMoneda').value;
+            
+            if (moneda === 'USD') {
+                monedaSimbolo = '$';
+                document.getElementById('lblPrecioInput').innerText = 'Precio Final Inc. IGV ($)';
+                document.getElementById('termMoneda').innerHTML = '<i class="fa-regular fa-circle-check"></i> Precios en dólares americanos incluido IGV, está sujeto al tipo de cambio del día.';
+                document.getElementById('iconSubtotal').innerText = '$';
+                
+                // Datos BCP Dólares
+                document.getElementById('lblBancoMoneda').innerText = 'BCP (Dólares):';
+                document.getElementById('txtCuenta').innerText = '191-7405057164';
+                document.getElementById('txtCCI').innerText = '00219100740505716450';
+            } else {
+                monedaSimbolo = 'S/';
+                document.getElementById('lblPrecioInput').innerText = 'Precio Final Inc. IGV (S/)';
+                document.getElementById('termMoneda').innerHTML = '<i class="fa-regular fa-circle-check"></i> Precios en Soles incluido IGV.';
+                document.getElementById('iconSubtotal').innerText = 'S';
+                
+                // Datos BCP Soles
+                document.getElementById('lblBancoMoneda').innerText = 'BCP (Soles):';
+                document.getElementById('txtCuenta').innerText = '191-7401783-0-83';
+                document.getElementById('txtCCI').innerText = '00219100740178308352';
+            }
+            
+            actualizarTabla(); // Recalcular con el nuevo símbolo
+        }
+
+        function actualizarDoc() {
+            document.getElementById('txtAsesor').innerText = document.getElementById('inpAsesor').value || 'Marlon Riojas';
+            document.getElementById('txtRazonSocial').innerText = document.getElementById('inpRazon').value || '-';
+            document.getElementById('txtRuc').innerText = document.getElementById('inpRuc').value || '-';
+            document.getElementById('txtDireccion').innerText = document.getElementById('inpDireccion').value || '-';
+            document.getElementById('txtContacto').innerText = document.getElementById('inpContacto').value || '-';
+            document.getElementById('txtTelefono').innerText = document.getElementById('inpTelefono').value || '-';
+        }
+
+        // Búsqueda SUNAT nativa (Lista para funcionar en GitHub Pages)
+        async function buscarRuc() {
+            const ruc = document.getElementById('inpBuscarRuc').value.trim();
+            
+            if (!/^\d{11}$/.test(ruc)) {
+                alert("RUC Inválido: Debe contener exactamente 11 números.");
+                return;
+            }
+
+            const btn = document.getElementById('btnBusqueda');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Buscando...';
+            btn.disabled = true;
+
+            try {
+                // Al estar alojado en GitHub Pages (que es https), esta llamada directa funcionará perfectamente.
+                const urlSunat = `https://api.apis.net.pe/v1/ruc?numero=${ruc}`;
+                const response = await axios.get(urlSunat);
+                const data = response.data;
+
+                if(data && data.nombre) {
+                    document.getElementById('inpRazon').value = data.nombre;
+                    document.getElementById('inpRuc').value = ruc;
+                    
+                    let direccionCompleta = data.direccion || '';
+                    if(data.distrito) direccionCompleta += ` - ${data.distrito}`;
+                    if(data.provincia) direccionCompleta += `, ${data.provincia}`;
+                    
+                    document.getElementById('inpDireccion').value = direccionCompleta.trim();
+                    actualizarDoc();
+                } else {
+                    throw new Error("RUC no encontrado");
+                }
+            } catch (error) {
+                alert("No se encontró el RUC o hubo un error de conexión.");
+                document.getElementById('inpRuc').value = ruc;
+                actualizarDoc();
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-search"></i> Buscar';
+                btn.disabled = false;
+            }
+        }
+
+        function generarCodigoAleatorio() {
+            const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let resultado = '';
+            for (let i = 0; i < 6; i++) {
+                resultado += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+            }
+            return resultado;
+        }
+
+        function agregarEquipo() {
+            const titulo = document.getElementById('inpTituloEq').value;
+            const subtitulo = document.getElementById('inpSubEq').value;
+            const cant = parseFloat(document.getElementById('inpCantEq').value);
+            const precio = parseFloat(document.getElementById('inpPrecioEq').value);
+
+            if(!titulo || isNaN(cant) || isNaN(precio)) {
+                alert("Completa el nombre, cantidad y precio."); return;
+            }
+
+            const codigoGenerado = generarCodigoAleatorio();
+
+            listaEquipos.push({ codigo: codigoGenerado, titulo, subtitulo, cant, precio });
+            
+            document.getElementById('inpTituloEq').value = '';
+            document.getElementById('inpSubEq').value = '';
+            document.getElementById('inpCantEq').value = '1';
+            document.getElementById('inpPrecioEq').value = '100.00';
+            document.getElementById('inpTituloEq').focus();
+
+            actualizarTabla();
+        }
+
+        function borrarEquipo(index) {
+            listaEquipos.splice(index, 1);
+            actualizarTabla();
+        }
+
+        function actualizarTabla() {
+            const tbody = document.getElementById('tablaCuerpo');
+            tbody.innerHTML = '';
+            
+            let granTotal = 0;
+
+            if(listaEquipos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="color:#999; padding:20px;">No hay equipos en la cotización</td></tr>';
+            }
+
+            listaEquipos.forEach((eq, index) => {
+                const totalLinea = eq.cant * eq.precio; 
+                granTotal += totalLinea;
+                
+                const cantHtml = `<span style="font-size:11px;">${eq.cant.toFixed(2)}</span><br><span style="color:#0055a4; font-size:10px;">Unidades</span>`;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-weight: 600; font-size: 10px;">${eq.codigo}</td>
+                        <td class="desc">
+                            <span class="desc-title">${eq.titulo}</span>
+                            <span class="desc-sub">${eq.subtitulo}</span>
+                        </td>
+                        <td>${cantHtml}</td>
+                        <td>${monedaSimbolo} ${eq.precio.toFixed(2)}</td>
+                        <td style="font-weight:600;">${monedaSimbolo} ${totalLinea.toFixed(2)}</td>
+                        <td class="ocultar-pdf" style="border:none; width:30px;">
+                            <button class="btn-rojo" onclick="borrarEquipo(${index})"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            const subtotalInverso = granTotal / 1.18;
+            const igvInverso = granTotal - subtotalInverso;
+
+            document.getElementById('txtSubtotal').innerText = `${monedaSimbolo} ${subtotalInverso.toFixed(2)}`;
+            document.getElementById('txtIgv').innerText = `${monedaSimbolo} ${igvInverso.toFixed(2)}`;
+            document.getElementById('txtTotal').innerText = `${monedaSimbolo} ${granTotal.toFixed(2)}`;
+        }
+
+        function exportarPDF() {
+            const botonesA_Ocultar = document.querySelectorAll('.ocultar-pdf');
+            botonesA_Ocultar.forEach(b => b.style.display = 'none');
+
+            const elemento = document.getElementById('documentoCotizacion');
+            const numCoti = document.getElementById('numCotizacion').innerText.replace('N° ', '');
+            
+            try {
+                html2canvas(elemento, { 
+                    scale: 2, 
+                    useCORS: true, 
+                    allowTaint: true 
+                }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                    const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                    
+                    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                    pdf.save(`${numCoti}_Cotizacion.pdf`);
+
+                    let seq = parseInt(localStorage.getItem('soma_seq_v2') || 2);
+                    localStorage.setItem('soma_seq_v2', seq + 1);
+                    
+                    document.getElementById('numCotizacion').innerText = `N° SOMA-2026-${String(seq + 1).padStart(4, '0')}`;
+                    botonesA_Ocultar.forEach(b => b.style.display = '');
+                }).catch(err => {
+                    console.error("Error html2canvas:", err);
+                    alert("Error al generar PDF. Asegúrate de no estar ejecutando el archivo localmente (doble clic en C:/...).");
+                    botonesA_Ocultar.forEach(b => b.style.display = '');
+                });
+            } catch (err) {
+                alert("Error fatal al inicializar PDF: " + err);
+                botonesA_Ocultar.forEach(b => b.style.display = '');
+            }
+        }
+    </script>
+</body>
+</html>
