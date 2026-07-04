@@ -249,7 +249,7 @@
                     <ul class="terminos-list">
                         <li><i class="fa-regular fa-circle-check"></i> Cotización válida por 7 días calendarios, consultar disponibilidad de stock antes de realizar el pago.</li>
                         <li id="termMoneda"><i class="fa-regular fa-circle-check"></i> Precios en dólares americanos incluido IGV, está sujeto al tipo de cambio del día.</li>
-                        <li><i class="fa-regular fa-circle-check"></i> Todo cambio o devolución de producto se dará dentro de los 10 días calendarios, presenting su comprobante y empaque original, con un plazo de respuesta de 2 días. No está sujeto a devolución de dinero.</li>
+                        <li><i class="fa-regular fa-circle-check"></i> Todo cambio o devolución de producto se dará dentro de los 10 días calendarios, presentando su comprobante y empaque original, con un plazo de respuesta de 2 días. No está sujeto a devolución de dinero.</li>
                         <li><i class="fa-regular fa-circle-check"></i> El comprador debe tener conocimiento de los equipos adquiridos para su buen uso y así evitar fallas por malas prácticas.</li>
                         <li><i class="fa-regular fa-circle-check"></i> Los equipos cuentan con garantía por defecto de fábrica, según el plazo asignado por el fabricante; la cual será evaluada por el área técnica emitiendo un informe para considerar la cobertura, conforme al certificado de garantía, en un plazo de respuesta de 7 días calendarios.</li>
                         <li><i class="fa-regular fa-circle-check"></i> Toda empresa que cuente con la calidad de Agente de retención deberá comunicarlo antes de la emisión del comprobante.</li>
@@ -362,7 +362,7 @@
             document.getElementById('txtTelefono').innerText = document.getElementById('inpTelefono').value || '-';
         }
 
-        // Búsqueda SUNAT con Proxy público para evadir el bloqueo de GitHub Pages
+        // Búsqueda SUNAT Ultra-Resistente (Múltiples intentos)
         async function buscarRuc() {
             const ruc = document.getElementById('inpBuscarRuc').value.trim();
             
@@ -375,15 +375,31 @@
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Buscando...';
             btn.disabled = true;
 
+            const urlSunat = `https://api.apis.net.pe/v1/ruc?numero=${ruc}`;
+
             try {
-                // Usamos AllOrigins como puente seguro
-                const urlSunat = `https://api.apis.net.pe/v1/ruc?numero=${ruc}`;
-                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(urlSunat)}`;
+                let data = null;
 
-                const response = await axios.get(proxyUrl);
-                const data = JSON.parse(response.data.contents); // AllOrigins devuelve el contenido aquí
+                // Intento 1: Proxy RAW (Devuelve los datos puros)
+                try {
+                    const response = await axios.get(`https://api.allorigins.win/raw?url=${encodeURIComponent(urlSunat)}`);
+                    data = response.data;
+                } catch (e1) {
+                    console.warn("Fallo Intento 1:", e1);
+                    // Intento 2: Corsproxy
+                    try {
+                        const response = await axios.get(`https://corsproxy.io/?${encodeURIComponent(urlSunat)}`);
+                        data = response.data;
+                    } catch (e2) {
+                        console.warn("Fallo Intento 2:", e2);
+                        // Intento 3: Directo a la API
+                        const response = await axios.get(urlSunat);
+                        data = response.data;
+                    }
+                }
 
-                if(data && data.nombre) {
+                // Verificamos si logramos obtener el nombre de la empresa
+                if (data && data.nombre) {
                     document.getElementById('inpRazon').value = data.nombre;
                     document.getElementById('inpRuc').value = ruc;
                     
@@ -394,11 +410,12 @@
                     document.getElementById('inpDireccion').value = direccionCompleta.trim();
                     actualizarDoc();
                 } else {
-                    throw new Error("RUC no encontrado");
+                    throw new Error("Datos no encontrados");
                 }
+
             } catch (error) {
-                console.error("Error al buscar RUC:", error);
-                alert("El servicio de consulta está saturado temporalmente. Por favor, escribe los datos manualmente.");
+                console.error("Error definitivo en la búsqueda:", error);
+                alert("La base de datos pública de la SUNAT está caída o saturada en este momento. Por favor, escribe la Razón Social manualmente.");
                 document.getElementById('inpRuc').value = ruc;
                 actualizarDoc();
             } finally {
