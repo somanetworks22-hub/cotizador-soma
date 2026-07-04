@@ -245,7 +245,7 @@
                 <div style="padding-top: 29px;">
                     <div class="info-row"><strong>Dirección:</strong> <span id="txtDireccion">-</span></div>
                     <div class="info-row"><strong>Distrito:</strong> <span>-</span></div>
-                    <div class="info-row"><strong>Ciudad:</strong> <span>Lima, Perú</span></div>
+                    <div class="info-row"><strong>Ciudad:</strong> <span>-</span></div>
                     <div class="info-row"><strong>Referencia:</strong> <span>-</span></div>
                 </div>
             </div>
@@ -357,24 +357,17 @@
                             <input type="text" id="editSub">
                         </div>
                     </div>
-                    <div class="fila-doble">
-                        <div class="input-group">
-                            <label>Precio Base</label>
-                            <input type="number" id="editPrecio" step="0.01">
-                        </div>
-                        <div style="display:flex; gap:5px; align-items:flex-end;">
-                            <button class="btn-accion btn-verde" style="flex:1; padding:8px;" onclick="guardarCambiosCatalogo()">Actualizar</button>
-                            <button class="btn-accion btn-rojo" style="padding:8px;" onclick="cancelarEdicion()">Cancelar</button>
-                        </div>
+                    <div style="display:flex; gap:5px; margin-top:10px;">
+                        <button class="btn-accion btn-verde" style="flex:1; padding:8px;" onclick="guardarCambiosCatalogo()">Actualizar</button>
+                        <button class="btn-accion btn-rojo" style="padding:8px;" onclick="cancelarEdicion()">Cancelar</button>
                     </div>
                 </div>
 
                 <table class="cat-table">
                     <thead>
                         <tr>
-                            <th width="30%">Nombre</th>
-                            <th width="40%">Descripción</th>
-                            <th width="15%">Precio</th>
+                            <th width="40%">Nombre</th>
+                            <th width="45%">Descripción</th>
                             <th width="15%" style="text-align:center;">Acciones</th>
                         </tr>
                     </thead>
@@ -406,7 +399,6 @@
 
         // --- FUNCIONES DEL CATÁLOGO DE EQUIPOS ---
 
-        // Renderizar la tabla del modal y la lista de autocompletado
         function renderizarCatalogo() {
             const tbody = document.getElementById('tablaCatalogoBody');
             const datalist = document.getElementById('listaCatalogo');
@@ -414,20 +406,18 @@
             datalist.innerHTML = '';
 
             if (catalogoSoma.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999; padding:20px;">No hay equipos guardados en el catálogo.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#999; padding:20px;">No hay equipos guardados en el catálogo.</td></tr>';
                 return;
             }
 
             catalogoSoma.forEach(item => {
-                // Llenar datalist para autocompletado
                 datalist.innerHTML += `<option value="${item.titulo}">`;
 
-                // Llenar tabla del modal
+                // Tabla ya no muestra precio
                 tbody.innerHTML += `
                     <tr>
                         <td><strong>${item.titulo}</strong></td>
                         <td>${item.subtitulo || '-'}</td>
-                        <td>${item.precio.toFixed(2)}</td>
                         <td style="text-align:center;">
                             <button class="btn-accion" style="padding:4px 6px; font-size:10px; margin-right:2px;" onclick="usarEquipoDelCatalogo('${item.id}')" title="Usar en cotización"><i class="fa-solid fa-check"></i></button>
                             <button class="btn-amarillo" style="margin-right:2px;" onclick="editarEquipoCatalogo('${item.id}')" title="Editar"><i class="fa-solid fa-pen"></i></button>
@@ -438,29 +428,25 @@
             });
         }
 
-        // Si escribes un nombre que existe, se llena el precio y la descripción solo
         function autocompletarEquipo() {
             const inputVal = document.getElementById('inpTituloEq').value;
             const equipoEncontrado = catalogoSoma.find(e => e.titulo === inputVal);
             
             if(equipoEncontrado) {
+                // Solo autocompleta la descripción, no toca el precio
                 document.getElementById('inpSubEq').value = equipoEncontrado.subtitulo;
-                document.getElementById('inpPrecioEq').value = equipoEncontrado.precio;
             }
         }
 
-        // Guardar el equipo actual escrito en las casillas hacia la base de datos
         function guardarEquipoEnCatalogo() {
             const titulo = document.getElementById('inpTituloEq').value.trim();
             const subtitulo = document.getElementById('inpSubEq').value.trim();
-            const precio = parseFloat(document.getElementById('inpPrecioEq').value);
 
-            if(!titulo || isNaN(precio)) {
-                alert("Por favor, ingresa al menos un Nombre y un Precio para guardar en el catálogo.");
+            if(!titulo) {
+                alert("Por favor, ingresa al menos un Nombre para guardar en el catálogo.");
                 return;
             }
 
-            // Evitar duplicados exactos por nombre
             const existe = catalogoSoma.find(e => e.titulo.toLowerCase() === titulo.toLowerCase());
             if (existe) {
                 alert("Este equipo ya existe en el catálogo. Si deseas modificarlo, abre el gestor de catálogo (ícono de lista).");
@@ -468,10 +454,9 @@
             }
 
             const nuevoEquipo = {
-                id: Date.now().toString(), // ID único basado en tiempo
+                id: Date.now().toString(), 
                 titulo: titulo,
-                subtitulo: subtitulo,
-                precio: precio
+                subtitulo: subtitulo
             };
 
             catalogoSoma.push(nuevoEquipo);
@@ -480,7 +465,6 @@
             alert(`"${titulo}" se ha guardado en tu catálogo exitosamente.`);
         }
 
-        // Funciones del Modal (Abrir, Cerrar, Usar, Eliminar, Editar)
         function abrirCatalogo() { document.getElementById('modalCatalogo').style.display = 'flex'; }
         function cerrarCatalogo() { 
             document.getElementById('modalCatalogo').style.display = 'none'; 
@@ -492,7 +476,6 @@
             if(equipo) {
                 document.getElementById('inpTituloEq').value = equipo.titulo;
                 document.getElementById('inpSubEq').value = equipo.subtitulo;
-                document.getElementById('inpPrecioEq').value = equipo.precio;
                 document.getElementById('inpCantEq').value = 1;
                 cerrarCatalogo();
             }
@@ -513,7 +496,6 @@
                 document.getElementById('editId').value = equipo.id;
                 document.getElementById('editTitulo').value = equipo.titulo;
                 document.getElementById('editSub').value = equipo.subtitulo;
-                document.getElementById('editPrecio').value = equipo.precio;
             }
         }
 
@@ -525,15 +507,13 @@
             const id = document.getElementById('editId').value;
             const titulo = document.getElementById('editTitulo').value.trim();
             const subtitulo = document.getElementById('editSub').value.trim();
-            const precio = parseFloat(document.getElementById('editPrecio').value);
 
-            if(!titulo || isNaN(precio)) { alert("Nombre y Precio son obligatorios."); return; }
+            if(!titulo) { alert("El Nombre es obligatorio."); return; }
 
             const index = catalogoSoma.findIndex(e => e.id === id);
             if(index !== -1) {
                 catalogoSoma[index].titulo = titulo;
                 catalogoSoma[index].subtitulo = subtitulo;
-                catalogoSoma[index].precio = precio;
                 localStorage.setItem('catalogoSoma', JSON.stringify(catalogoSoma));
                 cancelarEdicion();
                 renderizarCatalogo();
