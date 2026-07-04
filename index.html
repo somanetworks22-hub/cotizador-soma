@@ -135,7 +135,7 @@
                 width: 100%; 
                 box-sizing: border-box; 
                 padding: 10px; 
-                display: block; /* Permite deslizar horizontalmente sin cortar el documento */
+                display: block; 
                 overflow-x: auto; 
             }
             .a4-container {
@@ -149,7 +149,7 @@
         
         @media screen and (max-width: 480px) {
             .fila-doble {
-                grid-template-columns: 1fr; /* Pone las casillas dobles una debajo de otra */
+                grid-template-columns: 1fr;
             }
             .cat-table th, .cat-table td {
                 font-size: 9px;
@@ -529,9 +529,23 @@
 
         function cambiarMoneda() {
             const moneda = document.getElementById('inpMoneda').value;
-            monedaSimbolo = (moneda === 'USD') ? '$' : 'S/';
-            document.getElementById('lblPrecioInput').innerText = `Precio Final Inc. IGV (${monedaSimbolo})`;
-            document.getElementById('iconSubtotal').innerText = (moneda === 'USD') ? '$' : 'S';
+            if (moneda === 'USD') {
+                monedaSimbolo = '$';
+                document.getElementById('lblPrecioInput').innerText = 'Precio Final Inc. IGV ($)';
+                document.getElementById('termMoneda').innerHTML = '<i class="fa-regular fa-circle-check"></i> Precios en dólares americanos incluido IGV, está sujeto al tipo de cambio del día.';
+                document.getElementById('iconSubtotal').innerText = '$';
+                document.getElementById('lblBancoMoneda').innerText = 'BCP (Dólares):';
+                document.getElementById('txtCuenta').innerText = '191-7405057164';
+                document.getElementById('txtCCI').innerText = '00219100740505716450';
+            } else {
+                monedaSimbolo = 'S/';
+                document.getElementById('lblPrecioInput').innerText = 'Precio Final Inc. IGV (S/)';
+                document.getElementById('termMoneda').innerHTML = '<i class="fa-regular fa-circle-check"></i> Precios en Soles incluido IGV.';
+                document.getElementById('iconSubtotal').innerText = 'S';
+                document.getElementById('lblBancoMoneda').innerText = 'BCP (Soles):';
+                document.getElementById('txtCuenta').innerText = '191-7401783-0-83';
+                document.getElementById('txtCCI').innerText = '00219100740178308352';
+            }
             actualizarTabla(); 
         }
 
@@ -658,7 +672,6 @@
             document.getElementById('txtTotal').innerText = `${monedaSimbolo} ${granTotal.toFixed(2)}`;
         }
 
-        // Lógica correcta usando Html2Canvas y jsPDF restaurada
         function exportarPDF() {
             const botonesA_Ocultar = document.querySelectorAll('.ocultar-pdf');
             botonesA_Ocultar.forEach(b => b.style.display = 'none');
