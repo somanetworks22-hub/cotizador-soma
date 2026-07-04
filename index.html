@@ -28,7 +28,12 @@
         .btn-accion:hover { background: #0f1a2e; }
         .btn-naranja { background: #f26822; }
         .btn-naranja:hover { background: #d95a1c; }
+        .btn-verde { background: #28a745; }
+        .btn-verde:hover { background: #218838; }
         .btn-rojo { background: #dc3545; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; }
+        .btn-rojo:hover { background: #c82333; }
+        .btn-amarillo { background: #ffc107; color: #000; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; }
+        .btn-amarillo:hover { background: #e0a800; }
 
         /* ÁREA DEL DOCUMENTO DERECHA */
         .area-preview { flex: 1; overflow-y: auto; padding: 40px; display: flex; justify-content: center; align-items: flex-start; background: #6b7280; }
@@ -55,7 +60,7 @@
         .quote-badge { background: #1a2b4c; color: white; padding: 6px 15px; border-radius: 20px; display: inline-block; margin: 8px 0; font-weight: 600; font-size: 12px; }
         .quote-details p { margin: 4px 0; display: flex; align-items: center; justify-content: flex-end; }
 
-        /* SECCIONES: CLIENTE E INSTALACIÓN */
+        /* SECCIONES */
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 25px; }
         .section-header { display: flex; align-items: center; border-bottom: 1.5px solid #f26822; padding-bottom: 5px; margin-bottom: 12px; }
         .section-header i { font-size: 14px; margin-right: 8px; }
@@ -75,14 +80,12 @@
 
         /* TOTALES Y TÉRMINOS ALINEADOS */
         .bottom-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px; flex-grow: 1; }
-        
         .terminos-box { border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; background: #fafafa; }
         .terminos-list { padding-left: 0; margin: 15px 0 0 0; list-style: none; }
         .terminos-list li { margin-bottom: 12px; position: relative; padding-left: 20px; color: #444; line-height: 1.4; text-align: justify; }
         .terminos-list li i { position: absolute; left: 0; top: 2px; color: #1a2b4c; font-size: 10px; }
 
         .right-column { display: flex; flex-direction: column; gap: 20px; }
-
         .totales-box { border: 1px solid #e0e0e0; border-radius: 6px; overflow: hidden; }
         .total-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #e0e0e0; }
         .total-icon { border: 1px solid #1a2b4c; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; margin-right: 10px; }
@@ -96,6 +99,22 @@
         .footer-item { display: flex; align-items: center; }
         .footer-item i { margin-right: 5px; color: #1a2b4c; }
         .separator { color: #ccc; margin: 0 10px; }
+
+        /* --- ESTILOS DEL MODAL DE CATÁLOGO --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 9999; }
+        .modal-content { background: white; width: 650px; border-radius: 8px; padding: 20px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 5px 15px rgba(0,0,0,0.3); font-family: 'Montserrat', sans-serif; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+        .modal-header h2 { margin: 0; color: #1a2b4c; font-size: 16px; }
+        .btn-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #666; }
+        .modal-body { overflow-y: auto; flex: 1; }
+        .cat-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        .cat-table th, .cat-table td { border: 1px solid #eee; padding: 8px; text-align: left; }
+        .cat-table th { background: #f8f9fa; color: #1a2b4c; }
+        .cat-table tr:hover { background-color: #f1f5f9; }
+        
+        .form-edicion { background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #e0e0e0; display: none; }
+        .form-edicion h4 { margin: 0 0 10px 0; color: #f26822; font-size: 13px; }
+        .form-edicion input { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-family: 'Montserrat'; font-size: 11px; box-sizing: border-box;}
     </style>
 </head>
 <body>
@@ -156,7 +175,11 @@
             <h3><i class="fa-solid fa-box"></i> 3. Agregar Equipos</h3>
             <div class="input-group">
                 <label>Nombre del Equipo / Servicio</label>
-                <input type="text" id="inpTituloEq" placeholder="Ej: CCR2116">
+                <div style="display:flex; gap:5px;">
+                    <input type="text" id="inpTituloEq" list="listaCatalogo" placeholder="Ej: CCR2116" style="flex:1;" oninput="autocompletarEquipo()">
+                    <button class="btn-accion" style="background:#17a2b8; padding:8px 12px;" onclick="abrirCatalogo()" title="Abrir Catálogo de Equipos"><i class="fa-solid fa-list"></i></button>
+                </div>
+                <datalist id="listaCatalogo"></datalist>
             </div>
             <div class="input-group">
                 <label>Descripción detallada (Opcional)</label>
@@ -172,7 +195,10 @@
                     <input type="number" id="inpPrecioEq" value="100.00" step="0.01">
                 </div>
             </div>
-            <button class="btn-accion" style="width:100%; margin-top:5px;" onclick="agregarEquipo()"><i class="fa-solid fa-plus"></i> Añadir a la Cotización</button>
+            <div class="fila-doble" style="margin-top:5px;">
+                <button class="btn-accion btn-verde" style="font-size:12px; padding:8px;" onclick="guardarEquipoEnCatalogo()"><i class="fa-solid fa-save"></i> Guardar</button>
+                <button class="btn-accion" style="font-size:12px; padding:8px;" onclick="agregarEquipo()"><i class="fa-solid fa-plus"></i> Añadir</button>
+            </div>
         </div>
 
         <div style="margin-top: auto;">
@@ -310,9 +336,62 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="modalCatalogo">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-list"></i> Catálogo de Equipos Guardados</h2>
+                <button class="btn-close" onclick="cerrarCatalogo()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                
+                <div class="form-edicion" id="formEdicionCatalogo">
+                    <h4>Editando Equipo</h4>
+                    <input type="hidden" id="editId">
+                    <div class="fila-doble">
+                        <div class="input-group">
+                            <label>Nombre</label>
+                            <input type="text" id="editTitulo">
+                        </div>
+                        <div class="input-group">
+                            <label>Descripción</label>
+                            <input type="text" id="editSub">
+                        </div>
+                    </div>
+                    <div class="fila-doble">
+                        <div class="input-group">
+                            <label>Precio Base</label>
+                            <input type="number" id="editPrecio" step="0.01">
+                        </div>
+                        <div style="display:flex; gap:5px; align-items:flex-end;">
+                            <button class="btn-accion btn-verde" style="flex:1; padding:8px;" onclick="guardarCambiosCatalogo()">Actualizar</button>
+                            <button class="btn-accion btn-rojo" style="padding:8px;" onclick="cancelarEdicion()">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <table class="cat-table">
+                    <thead>
+                        <tr>
+                            <th width="30%">Nombre</th>
+                            <th width="40%">Descripción</th>
+                            <th width="15%">Precio</th>
+                            <th width="15%" style="text-align:center;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCatalogoBody">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Arreglo de la cotización actual
         let listaEquipos = [];
-        let monedaSimbolo = '$'; // Por defecto
+        let monedaSimbolo = '$'; 
+        
+        // Base de datos de Catálogo guardado en el navegador
+        let catalogoSoma = JSON.parse(localStorage.getItem('catalogoSoma')) || [];
 
         window.onload = () => {
             let seq = localStorage.getItem('soma_seq_v2') || 2; 
@@ -322,19 +401,154 @@
             document.getElementById('txtFechaEmi').innerText = hoy.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
             
             actualizarTabla();
+            renderizarCatalogo(); // Cargar los equipos guardados al iniciar
         };
 
-        // Función para cambiar de moneda dinámicamente
+        // --- FUNCIONES DEL CATÁLOGO DE EQUIPOS ---
+
+        // Renderizar la tabla del modal y la lista de autocompletado
+        function renderizarCatalogo() {
+            const tbody = document.getElementById('tablaCatalogoBody');
+            const datalist = document.getElementById('listaCatalogo');
+            tbody.innerHTML = '';
+            datalist.innerHTML = '';
+
+            if (catalogoSoma.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999; padding:20px;">No hay equipos guardados en el catálogo.</td></tr>';
+                return;
+            }
+
+            catalogoSoma.forEach(item => {
+                // Llenar datalist para autocompletado
+                datalist.innerHTML += `<option value="${item.titulo}">`;
+
+                // Llenar tabla del modal
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${item.titulo}</strong></td>
+                        <td>${item.subtitulo || '-'}</td>
+                        <td>${item.precio.toFixed(2)}</td>
+                        <td style="text-align:center;">
+                            <button class="btn-accion" style="padding:4px 6px; font-size:10px; margin-right:2px;" onclick="usarEquipoDelCatalogo('${item.id}')" title="Usar en cotización"><i class="fa-solid fa-check"></i></button>
+                            <button class="btn-amarillo" style="margin-right:2px;" onclick="editarEquipoCatalogo('${item.id}')" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn-rojo" onclick="eliminarEquipoCatalogo('${item.id}')" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Si escribes un nombre que existe, se llena el precio y la descripción solo
+        function autocompletarEquipo() {
+            const inputVal = document.getElementById('inpTituloEq').value;
+            const equipoEncontrado = catalogoSoma.find(e => e.titulo === inputVal);
+            
+            if(equipoEncontrado) {
+                document.getElementById('inpSubEq').value = equipoEncontrado.subtitulo;
+                document.getElementById('inpPrecioEq').value = equipoEncontrado.precio;
+            }
+        }
+
+        // Guardar el equipo actual escrito en las casillas hacia la base de datos
+        function guardarEquipoEnCatalogo() {
+            const titulo = document.getElementById('inpTituloEq').value.trim();
+            const subtitulo = document.getElementById('inpSubEq').value.trim();
+            const precio = parseFloat(document.getElementById('inpPrecioEq').value);
+
+            if(!titulo || isNaN(precio)) {
+                alert("Por favor, ingresa al menos un Nombre y un Precio para guardar en el catálogo.");
+                return;
+            }
+
+            // Evitar duplicados exactos por nombre
+            const existe = catalogoSoma.find(e => e.titulo.toLowerCase() === titulo.toLowerCase());
+            if (existe) {
+                alert("Este equipo ya existe en el catálogo. Si deseas modificarlo, abre el gestor de catálogo (ícono de lista).");
+                return;
+            }
+
+            const nuevoEquipo = {
+                id: Date.now().toString(), // ID único basado en tiempo
+                titulo: titulo,
+                subtitulo: subtitulo,
+                precio: precio
+            };
+
+            catalogoSoma.push(nuevoEquipo);
+            localStorage.setItem('catalogoSoma', JSON.stringify(catalogoSoma));
+            renderizarCatalogo();
+            alert(`"${titulo}" se ha guardado en tu catálogo exitosamente.`);
+        }
+
+        // Funciones del Modal (Abrir, Cerrar, Usar, Eliminar, Editar)
+        function abrirCatalogo() { document.getElementById('modalCatalogo').style.display = 'flex'; }
+        function cerrarCatalogo() { 
+            document.getElementById('modalCatalogo').style.display = 'none'; 
+            cancelarEdicion();
+        }
+
+        function usarEquipoDelCatalogo(id) {
+            const equipo = catalogoSoma.find(e => e.id === id);
+            if(equipo) {
+                document.getElementById('inpTituloEq').value = equipo.titulo;
+                document.getElementById('inpSubEq').value = equipo.subtitulo;
+                document.getElementById('inpPrecioEq').value = equipo.precio;
+                document.getElementById('inpCantEq').value = 1;
+                cerrarCatalogo();
+            }
+        }
+
+        function eliminarEquipoCatalogo(id) {
+            if(confirm("¿Estás seguro de eliminar este equipo del catálogo?")) {
+                catalogoSoma = catalogoSoma.filter(e => e.id !== id);
+                localStorage.setItem('catalogoSoma', JSON.stringify(catalogoSoma));
+                renderizarCatalogo();
+            }
+        }
+
+        function editarEquipoCatalogo(id) {
+            const equipo = catalogoSoma.find(e => e.id === id);
+            if(equipo) {
+                document.getElementById('formEdicionCatalogo').style.display = 'block';
+                document.getElementById('editId').value = equipo.id;
+                document.getElementById('editTitulo').value = equipo.titulo;
+                document.getElementById('editSub').value = equipo.subtitulo;
+                document.getElementById('editPrecio').value = equipo.precio;
+            }
+        }
+
+        function cancelarEdicion() {
+            document.getElementById('formEdicionCatalogo').style.display = 'none';
+        }
+
+        function guardarCambiosCatalogo() {
+            const id = document.getElementById('editId').value;
+            const titulo = document.getElementById('editTitulo').value.trim();
+            const subtitulo = document.getElementById('editSub').value.trim();
+            const precio = parseFloat(document.getElementById('editPrecio').value);
+
+            if(!titulo || isNaN(precio)) { alert("Nombre y Precio son obligatorios."); return; }
+
+            const index = catalogoSoma.findIndex(e => e.id === id);
+            if(index !== -1) {
+                catalogoSoma[index].titulo = titulo;
+                catalogoSoma[index].subtitulo = subtitulo;
+                catalogoSoma[index].precio = precio;
+                localStorage.setItem('catalogoSoma', JSON.stringify(catalogoSoma));
+                cancelarEdicion();
+                renderizarCatalogo();
+            }
+        }
+
+        // --- FUNCIONES ORIGINALES (Cotización, SUNAT, PDF, Moneda) ---
+
         function cambiarMoneda() {
             const moneda = document.getElementById('inpMoneda').value;
-            
             if (moneda === 'USD') {
                 monedaSimbolo = '$';
                 document.getElementById('lblPrecioInput').innerText = 'Precio Final Inc. IGV ($)';
                 document.getElementById('termMoneda').innerHTML = '<i class="fa-regular fa-circle-check"></i> Precios en dólares americanos incluido IGV, está sujeto al tipo de cambio del día.';
                 document.getElementById('iconSubtotal').innerText = '$';
-                
-                // Datos BCP Dólares
                 document.getElementById('lblBancoMoneda').innerText = 'BCP (Dólares):';
                 document.getElementById('txtCuenta').innerText = '191-7405057164';
                 document.getElementById('txtCCI').innerText = '00219100740505716450';
@@ -343,14 +557,11 @@
                 document.getElementById('lblPrecioInput').innerText = 'Precio Final Inc. IGV (S/)';
                 document.getElementById('termMoneda').innerHTML = '<i class="fa-regular fa-circle-check"></i> Precios en Soles incluido IGV.';
                 document.getElementById('iconSubtotal').innerText = 'S';
-                
-                // Datos BCP Soles
                 document.getElementById('lblBancoMoneda').innerText = 'BCP (Soles):';
                 document.getElementById('txtCuenta').innerText = '191-7401783-0-83';
                 document.getElementById('txtCCI').innerText = '00219100740178308352';
             }
-            
-            actualizarTabla(); // Recalcular con el nuevo símbolo
+            actualizarTabla(); 
         }
 
         function actualizarDoc() {
@@ -362,14 +573,9 @@
             document.getElementById('txtTelefono').innerText = document.getElementById('inpTelefono').value || '-';
         }
 
-        // Búsqueda SUNAT Ultra-Resistente (Múltiples intentos)
         async function buscarRuc() {
             const ruc = document.getElementById('inpBuscarRuc').value.trim();
-            
-            if (!/^\d{11}$/.test(ruc)) {
-                alert("RUC Inválido: Debe contener exactamente 11 números.");
-                return;
-            }
+            if (!/^\d{11}$/.test(ruc)) { alert("RUC Inválido: Debe contener exactamente 11 números."); return; }
 
             const btn = document.getElementById('btnBusqueda');
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Buscando...';
@@ -379,42 +585,31 @@
 
             try {
                 let data = null;
-
-                // Intento 1: Proxy RAW (Devuelve los datos puros)
                 try {
                     const response = await axios.get(`https://api.allorigins.win/raw?url=${encodeURIComponent(urlSunat)}`);
                     data = response.data;
                 } catch (e1) {
-                    console.warn("Fallo Intento 1:", e1);
-                    // Intento 2: Corsproxy
                     try {
                         const response = await axios.get(`https://corsproxy.io/?${encodeURIComponent(urlSunat)}`);
                         data = response.data;
                     } catch (e2) {
-                        console.warn("Fallo Intento 2:", e2);
-                        // Intento 3: Directo a la API
                         const response = await axios.get(urlSunat);
                         data = response.data;
                     }
                 }
 
-                // Verificamos si logramos obtener el nombre de la empresa
                 if (data && data.nombre) {
                     document.getElementById('inpRazon').value = data.nombre;
                     document.getElementById('inpRuc').value = ruc;
-                    
                     let direccionCompleta = data.direccion || '';
                     if(data.distrito) direccionCompleta += ` - ${data.distrito}`;
                     if(data.provincia) direccionCompleta += `, ${data.provincia}`;
-                    
                     document.getElementById('inpDireccion').value = direccionCompleta.trim();
                     actualizarDoc();
                 } else {
                     throw new Error("Datos no encontrados");
                 }
-
             } catch (error) {
-                console.error("Error definitivo en la búsqueda:", error);
                 alert("La base de datos pública de la SUNAT está caída o saturada en este momento. Por favor, escribe la Razón Social manualmente.");
                 document.getElementById('inpRuc').value = ruc;
                 actualizarDoc();
@@ -427,9 +622,7 @@
         function generarCodigoAleatorio() {
             const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
             let resultado = '';
-            for (let i = 0; i < 6; i++) {
-                resultado += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
-            }
+            for (let i = 0; i < 6; i++) { resultado += caracteres.charAt(Math.floor(Math.random() * caracteres.length)); }
             return resultado;
         }
 
@@ -439,12 +632,9 @@
             const cant = parseFloat(document.getElementById('inpCantEq').value);
             const precio = parseFloat(document.getElementById('inpPrecioEq').value);
 
-            if(!titulo || isNaN(cant) || isNaN(precio)) {
-                alert("Completa el nombre, cantidad y precio."); return;
-            }
+            if(!titulo || isNaN(cant) || isNaN(precio)) { alert("Completa el nombre, cantidad y precio."); return; }
 
             const codigoGenerado = generarCodigoAleatorio();
-
             listaEquipos.push({ codigo: codigoGenerado, titulo, subtitulo, cant, precio });
             
             document.getElementById('inpTituloEq').value = '';
@@ -529,8 +719,7 @@
                     document.getElementById('numCotizacion').innerText = `N° SOMA-2026-${String(seq + 1).padStart(4, '0')}`;
                     botonesA_Ocultar.forEach(b => b.style.display = '');
                 }).catch(err => {
-                    console.error("Error html2canvas:", err);
-                    alert("Error al generar PDF. Asegúrate de no estar ejecutando el archivo localmente (doble clic en C:/...).");
+                    alert("Error al generar PDF. Refresca la página y vuelve a intentar.");
                     botonesA_Ocultar.forEach(b => b.style.display = '');
                 });
             } catch (err) {
