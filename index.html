@@ -249,7 +249,7 @@
                     <ul class="terminos-list">
                         <li><i class="fa-regular fa-circle-check"></i> Cotización válida por 7 días calendarios, consultar disponibilidad de stock antes de realizar el pago.</li>
                         <li id="termMoneda"><i class="fa-regular fa-circle-check"></i> Precios en dólares americanos incluido IGV, está sujeto al tipo de cambio del día.</li>
-                        <li><i class="fa-regular fa-circle-check"></i> Todo cambio o devolución de producto se dará dentro de los 10 días calendarios, presentando su comprobante y empaque original, con un plazo de respuesta de 2 días. No está sujeto a devolución de dinero.</li>
+                        <li><i class="fa-regular fa-circle-check"></i> Todo cambio o devolución de producto se dará dentro de los 10 días calendarios, presenting su comprobante y empaque original, con un plazo de respuesta de 2 días. No está sujeto a devolución de dinero.</li>
                         <li><i class="fa-regular fa-circle-check"></i> El comprador debe tener conocimiento de los equipos adquiridos para su buen uso y así evitar fallas por malas prácticas.</li>
                         <li><i class="fa-regular fa-circle-check"></i> Los equipos cuentan con garantía por defecto de fábrica, según el plazo asignado por el fabricante; la cual será evaluada por el área técnica emitiendo un informe para considerar la cobertura, conforme al certificado de garantía, en un plazo de respuesta de 7 días calendarios.</li>
                         <li><i class="fa-regular fa-circle-check"></i> Toda empresa que cuente con la calidad de Agente de retención deberá comunicarlo antes de la emisión del comprobante.</li>
@@ -362,7 +362,7 @@
             document.getElementById('txtTelefono').innerText = document.getElementById('inpTelefono').value || '-';
         }
 
-        // Búsqueda SUNAT nativa (Lista para funcionar en GitHub Pages)
+        // Búsqueda SUNAT con Proxy público para evadir el bloqueo de GitHub Pages
         async function buscarRuc() {
             const ruc = document.getElementById('inpBuscarRuc').value.trim();
             
@@ -376,10 +376,12 @@
             btn.disabled = true;
 
             try {
-                // Al estar alojado en GitHub Pages (que es https), esta llamada directa funcionará perfectamente.
+                // Usamos AllOrigins como puente seguro
                 const urlSunat = `https://api.apis.net.pe/v1/ruc?numero=${ruc}`;
-                const response = await axios.get(urlSunat);
-                const data = response.data;
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(urlSunat)}`;
+
+                const response = await axios.get(proxyUrl);
+                const data = JSON.parse(response.data.contents); // AllOrigins devuelve el contenido aquí
 
                 if(data && data.nombre) {
                     document.getElementById('inpRazon').value = data.nombre;
@@ -395,7 +397,8 @@
                     throw new Error("RUC no encontrado");
                 }
             } catch (error) {
-                alert("No se encontró el RUC o hubo un error de conexión.");
+                console.error("Error al buscar RUC:", error);
+                alert("El servicio de consulta está saturado temporalmente. Por favor, escribe los datos manualmente.");
                 document.getElementById('inpRuc').value = ruc;
                 actualizarDoc();
             } finally {
